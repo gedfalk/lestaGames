@@ -1,12 +1,24 @@
 <!DOCTYPE html>
 <html>
-    
-    <head>
-        <title>LestaGames</title>
-        <link rel="stylesheet" href="{{ url_for('static', path='/styles/index.css') }}">
-    </head>
-
-    <body>
-        <h1>{{ message }}</h1>
-    </body>
+<head>
+    <title>Text Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles/main.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Анализ текста</h1>
+        {% if uploaded %}
+            <p class="hint-success">Файл загружен успешно</p>
+        {% else %}
+            <p class="hint">Загрузите файл</p>
+        {% endif %}
+        
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" id="file-input" accept=".txt" onchange="this.form.submit()" hidden>
+            <button type="button" onclick="document.getElementById('file-input').click()" class="upload-button">
+                Выбрать...
+            </button>
+        </form>
+    </div>
+</body>
 </html>
