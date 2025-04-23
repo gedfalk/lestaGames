@@ -19,6 +19,27 @@
                 Выбрать...
             </button>
         </form>
+
+        {% if word_count %}
+        <div class="results">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Word</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for word, count in word_count %}
+                    <tr>
+                        <td>{{ word }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
     </div>
 </body>
 </html>
