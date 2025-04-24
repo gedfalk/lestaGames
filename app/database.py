@@ -28,7 +28,7 @@ def init_db():
                              
             CREATE TABLE word_idf (
                 word TEXT PRIMARY KEY,
-                idf REAL DEFAULT 1.0
+                idf REAL DEFAULT 0.0
                 );
             
             CREATE TABLE word_tf (

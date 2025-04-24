@@ -1,5 +1,6 @@
 import hashlib
 import re
+import math
 from collections import Counter
 
 # delete sqlite3 and dbpath
@@ -46,7 +47,7 @@ class FileProcessing:
         )
         return
     
-    def _save_word_tf(self, connection, file_id: int, text: str) -> None:
+    def _save_word_tfidf(self, connection, file_id: int, text: str) -> None:
         words = Counter(re.findall(r'\b\w+\b', text.lower()))
         cursor = connection.cursor()
         for word, tf in words.items():
@@ -54,20 +55,33 @@ class FileProcessing:
                 "INSERT INTO word_tf (word, file_id, tf) VALUES (?, ?, ?)",
                 (word, file_id, tf)
             )
-            # здесь же добавляем в таблицу word_idf, где дефолт равен 1.0
-            # нужно обработать случай, когда слово уже есть в таблице
-            # cursor.execute(
-            #     "INSERT INTO word_idf (word) VALUES (?)",
-            #     (word,)
-            # )
-
+            # Здесь мы сохраняем Первое вхождение с дефолтным idf=1.0
+            cursor.execute(
+                "INSERT OR IGNORE INTO word_idf (word) VALUES (?)",
+                (word,)
+            )
+        
+        # И сразу же обновляем idf для всей таблицы. Нужно ли это делать здесь?..
+        total_files = cursor.execute("SELECT COUNT(*) FROM files").fetchone()[0]
+        unique_words = cursor.execute("SELECT word FROM word_idf").fetchall()
+        for word in unique_words:
+            files_with_words = cursor.execute(
+                "SELECT COUNT(DISTINCT file_id) FROM word_tf WHERE word = ?",
+                (word)
+            ).fetchone()[0]
+            
+            idf = math.log(total_files / files_with_words)
+            cursor.execute(
+                "UPDATE word_idf SET idf = ? WHERE word = ?",
+                (idf, word[0])
+            )
 
 
 if __name__ == "__main__":
     FP = FileProcessing(DB_PATH)
     
     temp_path = "/home/gedfalk/Space/testProjects/lestaGames/tests/files/"
-    file_name = "004.txt"
+    file_name = "007.txt"
     PATH = temp_path+file_name
 
     with open(PATH, "r") as file:
@@ -82,10 +96,22 @@ if __name__ == "__main__":
             FP._insert_new_file(connection, PATH, file_hash)
             file_in = FP._is_file_processed(connection, PATH, file_hash)   
             print(f'{file_name} is inserted')
-            FP._save_word_tf(connection, file_in, text)
+            FP._save_word_tfidf(connection, file_in, text)
         else:
             print(f"File is already there. It's id equals {file_in}")
 
+
+        # test
+        # cursor = connection.cursor()
+        # unique_words = cursor.execute("SELECT word FROM word_idf").fetchall()
+        # for word in unique_words:
+        #     files_with_words = cursor.execute(
+        #         "SELECT COUNT(DISTINCT file_id) FROM word_tf WHERE word = ?",
+        #         (word)
+        #     ).fetchone()[0]
+        #     print(f"{word} появлется {files_with_words} раза")
+
+            
         # print_table(connection, 'files', 'file_id', 'file_name')
-        print_table(connection, 'word_tf', 'word', 'file_id')
-    
+        # print_table(connection, 'word_tf', 'word', 'file_id')
+        print_table(connection, 'word_idf', 'word', 'idf')
