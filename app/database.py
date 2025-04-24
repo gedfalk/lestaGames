@@ -36,7 +36,7 @@ def init_db():
                 file_id INTEGER NOT NULL,
                 tf INTEGER NOT NULL,
                 PRIMARY KEY (word, file_id),
-                FOREIGN KEY (word) REFERENCES words(word),
+                FOREIGN KEY (word) REFERENCES word_idf(word),
                 FOREIGN KEY (file_id) REFERENCES files(file_id)
                 );
               
