@@ -8,7 +8,7 @@
     <div class="container">
         <h1>Анализ текста</h1>
         {% if uploaded %}
-            <p class="hint-success">Файл загружен успешно</p>
+            <p class="hint-success">Файл {{ file_name }} загружен успешно</p>
         {% else %}
             <p class="hint">Загрузите файл</p>
         {% endif %}
@@ -20,20 +20,22 @@
             </button>
         </form>
 
-        {% if word_count %}
+        {% if content %}
         <div class="results">
             <table>
                 <thead>
                     <tr>
-                        <th>Word</th>
-                        <th>Count</th>
+                        <th>word</th>
+                        <th>count</th>
+                        <th>idf</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for word, count in word_count %}
+                    {% for word in content %}
                     <tr>
-                        <td>{{ word }}</td>
-                        <td>{{ count }}</td>
+                        <td>{{ word.word }}</td>
+                        <td>{{ word.tf }}</td>
+                        <td>{{ word.idf }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

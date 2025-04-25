@@ -3,30 +3,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
-import re
-from collections import Counter
 import sqlite3
 from database import init_db, DB_PATH
-
-
-def count_words(text: str):
-    words = re.findall(r'\b\w+\b', text.lower())
-    return Counter(words)
-
-# Это нужно в любом случае переписывать
-def save_to_db(counted_words):
-    with sqlite3.connect(DB_PATH) as connection:
-        cursor = connection.cursor()
-
-        # пока так... для однократного подсчёта очищаем таблицу
-        cursor.execute("DELETE FROM word_count")
-
-        cursor.executemany(
-            "INSERT INTO word_count (word, count) VALUES (?, ?)",
-            counted_words.items()
-        )
-
-        connection.commit()
+from file_processor import FileProcessing
 
 
 init_db()
@@ -34,30 +13,53 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+
 @app.get("/")
 async def upload_form(request: Request):
     return templates.TemplateResponse("index.html",{"request": request})
 
 @app.post("/upload")
 async def upload_file(request: Request, file: UploadFile = File(...)):
-    content = (await file.read()).decode()
-    counted_words = count_words(content)
-    save_to_db(counted_words)
+    text = (await file.read()).decode()
+    FP = FileProcessing(DB_PATH)
+    file_name = file.filename
+    file_hash = FP._get_hash(text)
 
-    # получить то 50 словъ
-    connection = sqlite3.connect(DB_PATH)
-    top50 = connection.execute(
-        "SELECT word, count FROM word_count ORDER BY count DESC LIMIT 50"
-    ).fetchall()
-    connection.close
+    with sqlite3.connect(DB_PATH) as connection:
+        file_id = FP._is_file_processed(connection, file_name, file_hash)
+        if file_id == 0:
+            FP._insert_new_file(connection, file_name, file_hash)
+            file_id = FP._is_file_processed(connection, file_name, file_hash)   
+            print(f'{file_name} is inserted')
+            FP._save_word_tfidf(connection, file_id, text)
+        else:
+            print(f"File is already there. It's id equals {file_id}")
+
+        cursor = connection.cursor()
+        cursor.execute("""
+            SELECT wt.word, wt.tf, wi.idf
+            FROM word_tf wt
+            JOIN word_idf wi ON wt.word = wi.word
+            WHERE wt.file_id = ?
+            ORDER BY wi.idf DESC
+            LIMIT 50""",
+            (file_id,)
+        )
+
+        content = cursor.fetchall()
+        content = [{"word": row[0], "tf": row[1], "idf": round(row[2], 2)} for row in content]
 
     return templates.TemplateResponse(
-        "index.html",
-        {"request": request, "uploaded": True, "word_count": top50}
+        "index.html", {"request": request, 
+                       "uploaded": True, 
+                       "file_name": file_name,
+                       "file_id": file_id,
+                       "content": content,                    
+                    }
     )
 
 
-# Чисто затестить
+# Тестовая страничка
 @app.get("/test/", response_class=HTMLResponse)
 async def index(request: Request):
     return templates.TemplateResponse(

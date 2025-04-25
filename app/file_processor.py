@@ -3,9 +3,9 @@ import re
 import math
 from collections import Counter
 
-# delete sqlite3 and dbpath
 import sqlite3
 from database import DB_PATH
+
 
 def print_table(connection, table_name, col1, col2):
     try:
@@ -15,7 +15,7 @@ def print_table(connection, table_name, col1, col2):
         for row in result:
             print(row)
     except:
-        print('something went terribly wrong')
+        print('Something went terribly wrong')
 
 
 class FileProcessing:
@@ -61,7 +61,7 @@ class FileProcessing:
                 (word,)
             )
         
-        # И сразу же обновляем idf для всей таблицы. Нужно ли это делать здесь?..
+        # И сразу же обновляем idf для всей таблицы. Нужно ли это делать прямо здесь?..
         total_files = cursor.execute("SELECT COUNT(*) FROM files").fetchone()[0]
         unique_words = cursor.execute("SELECT word FROM word_idf").fetchall()
         for word in unique_words:
@@ -78,10 +78,11 @@ class FileProcessing:
 
 
 if __name__ == "__main__":
+    # тест-тест
     FP = FileProcessing(DB_PATH)
     
     temp_path = "/home/gedfalk/Space/testProjects/lestaGames/tests/files/"
-    file_name = "007.txt"
+    file_name = "001.txt"
     PATH = temp_path+file_name
 
     with open(PATH, "r") as file:
@@ -89,7 +90,6 @@ if __name__ == "__main__":
     
     with sqlite3.connect(DB_PATH) as connection:
         file_hash = FP._get_hash(text)
-        print(text[:20], file_hash)
 
         file_in = FP._is_file_processed(connection, PATH, file_hash)
         if file_in == 0:
@@ -99,19 +99,7 @@ if __name__ == "__main__":
             FP._save_word_tfidf(connection, file_in, text)
         else:
             print(f"File is already there. It's id equals {file_in}")
-
-
-        # test
-        # cursor = connection.cursor()
-        # unique_words = cursor.execute("SELECT word FROM word_idf").fetchall()
-        # for word in unique_words:
-        #     files_with_words = cursor.execute(
-        #         "SELECT COUNT(DISTINCT file_id) FROM word_tf WHERE word = ?",
-        #         (word)
-        #     ).fetchone()[0]
-        #     print(f"{word} появлется {files_with_words} раза")
-
             
         # print_table(connection, 'files', 'file_id', 'file_name')
         # print_table(connection, 'word_tf', 'word', 'file_id')
-        print_table(connection, 'word_idf', 'word', 'idf')
+        # print_table(connection, 'word_idf', 'word', 'idf')
