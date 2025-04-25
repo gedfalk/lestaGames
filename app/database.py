@@ -1,9 +1,9 @@
-# db/words.db and word_count
-
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent.parent / "db/tfidf.db"
+DB_DIR = Path(__file__).parent.parent / "db"
+DB_DIR.mkdir(exist_ok=True)
+DB_PATH = DB_DIR / "tfidf.db"
 
 def init_db():
     with sqlite3.connect(DB_PATH) as connection:
