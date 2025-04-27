@@ -7,7 +7,7 @@
 <body>
     <div class="container">
         <h1>Анализ текста</h1>
-        {% if uploaded %}
+        {% if file_name %}
             <p class="hint-success">Файл {{ file_name }} загружен успешно</p>
         {% else %}
             <p class="hint">Загрузите файл</p>
@@ -20,18 +20,39 @@
             </button>
         </form>
 
-        {% if content %}
+        {% if words %}
         <div class="results">
             <table>
                 <thead>
                     <tr>
-                        <th>word</th>
-                        <th>count</th>
-                        <th>idf</th>
+                        <th class="header-cell">
+                            <a href="/results?file_name={{ file_name }}&file_id={{ file_id }}&sort_by=word&order={% if current_sort == 'word' and current_order == 'asc' %}desc{% else %}asc{% endif %}">
+                                word
+                                {% if current_sort == 'word' %} 
+                                    {% if current_order == 'desc' %}⇩{% else %}⇧{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th class="header-cell">
+                            <a href="/results?file_name={{ file_name }}&file_id={{ file_id }}&sort_by=tf&order={% if current_sort == 'tf' and current_order == 'asc' %}desc{% else %}asc{% endif %}">
+                                count
+                                {% if current_sort == 'tf' %} 
+                                    {% if current_order == 'desc' %}⇩{% else %}⇧{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th class="header-cell"> 
+                            <a href="/results?file_name={{ file_name }}&file_id={{ file_id }}&sort_by=idf&order={% if current_sort == 'idf' and current_order == 'asc' %}desc{% else %}asc{% endif %}">
+                                idf
+                                {% if current_sort == 'idf' %} 
+                                    {% if current_order == 'desc' %}⇩{% else %}⇧{% endif %}
+                                {% endif %}
+                            </a>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for word in content %}
+                    {% for word in words %}
                     <tr>
                         <td>{{ word.word }}</td>
                         <td>{{ word.tf }}</td>

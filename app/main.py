@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Request, UploadFile, File
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request, UploadFile, File, Query
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 
@@ -35,27 +35,43 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
         else:
             print(f"File is already there. It's id equals {file_id}")
 
+    return RedirectResponse(
+        url=f"/results?file_name={file_name}&file_id={file_id}",
+        status_code=303
+    )    
+     
+@app.get("/results")
+async def show_results(
+    request: Request,
+    file_name: str,
+    file_id: int,
+    sort_by: str = Query("idf", enum=["word", "tf", "idf"]),
+    order: str = Query("desc", enum=["asc", "desc"])
+):
+    with sqlite3.connect(DB_PATH) as connection:
         cursor = connection.cursor()
-        cursor.execute("""
-            SELECT wt.word, wt.tf, wi.idf
-            FROM word_tf wt
-            JOIN word_idf wi ON wt.word = wi.word
-            WHERE wt.file_id = ?
-            ORDER BY wi.idf DESC
-            LIMIT 50""",
-            (file_id,)
-        )
+        query = f"""
+        SELECT wt.word as word, wt.tf as tf, wi.idf as idf
+        FROM word_tf wt
+        JOIN word_idf wi ON wt.word = wi.word
+        WHERE wt.file_id = ?
+        ORDER BY {sort_by} {order.upper()}
+        LIMIT 50
+        """
 
-        content = cursor.fetchall()
-        content = [{"word": row[0], "tf": row[1], "idf": round(row[2], 2)} for row in content]
+    words = cursor.execute(query, (file_id,)).fetchall()
+    words = [{"word": row[0], "tf": row[1], "idf": round(row[2], 2)} for row in words]
 
     return templates.TemplateResponse(
-        "index.html", {"request": request, 
-                       "uploaded": True, 
-                       "file_name": file_name,
-                       "file_id": file_id,
-                       "content": content,                    
-                    }
+        "index.html",
+        {
+            "request": request,
+            "file_name": file_name,
+            "file_id": file_id,
+            "current_sort": sort_by,
+            "current_order": order,
+            "words": words,
+        }
     )
 
 
