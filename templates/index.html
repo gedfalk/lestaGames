@@ -19,6 +19,30 @@
                 Выбрать...
             </button>
         </form>
+            
+        <div class="pagination-container">
+            <nav class="pagination">
+                {% if pagination %}
+                    <a href="/results?file_name={{ file_name }}&file_id={{ file_id }}&sort_by={{ current_sort }}&order={{ current_order }}&page={{ pagination.current_page-1 }}" 
+                    class="page-nav {% if pagination.current_page == 1 %}disabled{% endif %}">&lt;</a>
+                
+                    {% for page_num in pagination.page_list %}
+                        {% if page_num == "ell" %}
+                            <span class="page-ellipsis">...</span>
+                        {% else %}
+                            <a href="/results?file_name={{ file_name }}&file_id={{ file_id }}&sort_by={{ current_sort }}&order={{ current_order }}&page={{ page_num }}"
+                            class="page-number {% if page_num == pagination.current_page %}active{% endif %}">
+                                {{ page_num }}
+                            </a>    
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <a href="/results?file_name={{ file_name }}&file_id={{ file_id }}&sort_by={{ current_sort }}&order={{ current_order }}&page={{ pagination.current_page+1 }}" 
+                    class="page-nav {% if pagination.current_page == pagination.total_pages %}disabled{% endif %}">&gt;</a>
+                {% endif %}
+            </nav>
+        </div>
+
 
         {% if words %}
         <div class="results">

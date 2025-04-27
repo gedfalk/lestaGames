@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 import sqlite3
 from database import init_db, DB_PATH
 from file_processor import FileProcessing
+from utils import get_page_list
 
 
 init_db()
@@ -46,21 +47,51 @@ async def show_results(
     file_name: str,
     file_id: int,
     sort_by: str = Query("idf", enum=["word", "tf", "idf"]),
-    order: str = Query("desc", enum=["asc", "desc"])
+    order: str = Query("desc", enum=["asc", "desc"]),
+    page: int = Query(1, ge=1)
 ):
+    items_per_page = 50
+    db_offset = (page-1) * items_per_page
+
     with sqlite3.connect(DB_PATH) as connection:
         cursor = connection.cursor()
+
+        # Общее число элементов... возожно, стоит вынести в таблицу files и там хранить?..
+        query = f"""
+        SELECT COUNT(*)
+        FROM word_tf wt
+        JOIN word_idf wi ON wt.word = wi.word
+        WHERE wt.file_id = ?
+        """
+        total_words = cursor.execute(query, (file_id,)).fetchone()[0]
+
+        # Просто вывести 50 элементов, упорядоченных согласно sort_by и order
+        # query = f"""
+        # SELECT wt.word as word, wt.tf as tf, wi.idf as idf
+        # FROM word_tf wt
+        # JOIN word_idf wi ON wt.word = wi.word
+        # WHERE wt.file_id = ?
+        # ORDER BY {sort_by} {order.upper()}
+        # LIMIT 50
+        # """
+        # words = cursor.execute(query, (file_id,)).fetchall()
+
+        # Вывести 50 элементов с позиции db_offset
         query = f"""
         SELECT wt.word as word, wt.tf as tf, wi.idf as idf
         FROM word_tf wt
         JOIN word_idf wi ON wt.word = wi.word
         WHERE wt.file_id = ?
         ORDER BY {sort_by} {order.upper()}
-        LIMIT 50
+        LIMIT 50 OFFSET ?
         """
+        words = cursor.execute(query, (file_id, db_offset)).fetchall()
 
-    words = cursor.execute(query, (file_id,)).fetchall()
     words = [{"word": row[0], "tf": row[1], "idf": round(row[2], 2)} for row in words]
+    total_pages = total_words // items_per_page
+    if total_words % items_per_page > 0:
+        total_pages += 1
+    page_list = get_page_list(page, total_pages)
 
     return templates.TemplateResponse(
         "index.html",
@@ -71,6 +102,11 @@ async def show_results(
             "current_sort": sort_by,
             "current_order": order,
             "words": words,
+            "pagination": {
+                "total_pages": total_pages,
+                "current_page": page,
+                "page_list": page_list
+            }
         }
     )
 

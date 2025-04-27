@@ -71,7 +71,6 @@ h1 {
 /* for table */
 
 .results {
-    margin-top: 1rem;
     width: 80%;
 } 
 
@@ -152,8 +151,78 @@ table:hover {
 }
 
 .header-cell:hover {
-    background-color: rgb(76, 76, 76);
+    background-color: rgb(255, 255, 255, 0.05);
+}
 
 .header-cell:hover a {
     color: inherit;
+}
+
+/* pagination */
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+  
+.pagination {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+  
+.page-nav,
+.page-number,
+.page-ellipsis {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-family: Arial, sans-serif;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.page-nav {
+    background-color: #2d2d2d;
+    color: #f0f0f0;
+    border: 1px solid #3a3a3a;
+}
+  
+.page-number {
+    background-color: #2d2d2d;
+    color: #f0f0f0;
+    border: 1px solid #3a3a3a;
+}
+  
+.page-number.active {
+    width: 2.6rem;
+    height: 2.6rem;
+    color: white;
+    font-weight: bold;
+    background: #575757;
+}
+ 
+.page-ellipsis {
+    color: #666666;
+    font-size: 2rem;
+    pointer-events: none;
+}
+  
+.page-nav:hover,
+.page-number:hover {
+    background-color: #a8a8a8;
+}
+  
+.page-number.active:hover {
+    background-color: #a8a8a8;
+}
+  
+.page-nav.disabled {
+    opacity: 0.3;
+    pointer-events: none;
 }
