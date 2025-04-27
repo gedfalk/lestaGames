@@ -1,10 +1,11 @@
 import hashlib
 import re
 import math
-from collections import Counter
-
 import sqlite3
+from collections import Counter
 from database import DB_PATH
+
+ALLOWED_FILE_TYPES = ('.txt')
 
 
 def print_table(connection, table_name, col1, col2):
@@ -24,6 +25,9 @@ class FileProcessing:
 
     def _get_hash(self, content:str) -> str:
         return hashlib.md5(content.encode()).hexdigest()
+
+    def _is_file_allowed(self, file_name: str) -> bool:
+        return file_name.lower().endswith(ALLOWED_FILE_TYPES)
 
     def _is_file_processed(self, connection, file_name: str, file_hash: str) -> bool:
         cursor = connection.cursor()

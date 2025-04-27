@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, UploadFile, File, Query
+from fastapi import FastAPI, Request, UploadFile, File, Query, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -21,8 +21,11 @@ async def upload_form(request: Request):
 
 @app.post("/upload")
 async def upload_file(request: Request, file: UploadFile = File(...)):
-    text = (await file.read()).decode()
     FP = FileProcessing(DB_PATH)
+    print(file.filename, type(file.filename), str(file.filename))
+    if not FP._is_file_allowed(file.filename):
+        raise HTTPException(400, detail="Формат файла не поддерживается")
+    text = (await file.read()).decode()
     file_name = file.filename
     file_hash = FP._get_hash(text)
 
